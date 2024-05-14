@@ -1,73 +1,85 @@
 # MONTE CARLO CONTROL ALGORITHM
 
 ## AIM
-To develop a Python program to find the optimal policy for the given RL environment using the Monte Carlo algorithm.
+To develop a Python program to find the optimal policy for the given MDP using the Monte carlo control algorithm.
 
 ## PROBLEM STATEMENT
 The FrozenLake environment in OpenAI Gym is a gridworld problem that challenges reinforcement learning agents to navigate a slippery terrain to reach a goal state while avoiding hazards. Note that the environment is closed with a fence, so the agent cannot leave the gridworld.
 
 ### States
-#### 5 Terminal States:
-  G (Goal): The state the agent aims to reach.
+- **5 Terminal States**:
+  - `G` (Goal): The state the agent aims to reach.
+  - `H` (Hole): A hazardous state that the agent must avoid at all costs.
+- **11 Non-terminal States**:
+  - `S` (Starting state): The initial position of the agent.
+  - Intermediate states: Grid cells forming a layout that the agent must traverse.
 
-  H (Hole): A hazardous state that the agent must avoid at all costs.
-#### 11 Non-terminal States:
-  S (Starting state): The initial position of the agent.
-
-  Intermediate states: Grid cells forming a layout that the agent must traverse.
 ### Actions
-   The agent has 4 possible actions:
+The agent can take 4 actions in each state:
+- `LEFT`
+- `RIGHT`
+- `UP` 
+- `DOWN`
 
-0: Left
-
-1: Down
-
-2: Right
-
-3: Up
 ### Transition Probabilities
-Slippery surface with a 33.3% chance of moving as intended and a 66.6% chance of moving in orthogonal directions. For example, if the agent intends to move left, there is a
+The environment is stochastic, meaning that the outcome of an action is not always certain.
+- **33.33%** chance of moving in the intended direction.
+- **66.66%** chance of moving in a orthogonal directions.
 
-33.3% chance of moving left, a
-33.3% chance of moving down, and a
-33.3% chance of moving up.
+This uncertainty adds complexity to the agent's navigation.
 
 ### Rewards
-The agent receives a reward of 1 for reaching the goal state, and a reward of 0 otherwise.
+- `+1` for reaching the goal state(G).
+- 0 reward for all other states, including the starting state (S) and intermediate states.
 
-### Graphical Representation
+### Episode Termination
+The episode terminates when the agent reaches the goal state (G) or falls into a hole (H).
 
-![image](https://github.com/lisianathiruselvan/monte-carlo-control/assets/119389971/867f72d1-67ca-4549-a1fa-d6b5c98ddc74)
+### GRAPHICAL REPRESENTATION
+![275603322-b0556bd7-2dc8-4066-8c34-6e4141cc25b1](https://github.com/Pravinrajj/monte-carlo-control/assets/117917674/7a54df6e-1d5b-4171-b281-5b4a4c8af7c8)
 
 ## MONTE CARLO CONTROL ALGORITHM
 1. Initialize the state value function V(s) and the policy π(s) arbitrarily.
-
 2. Generate an episode using π(s) and store the state, action, and reward sequence.
-
 3. For each state s appearing in the episode:
-      
-      G ← return following the first occurrence of s
-
-      Append G to Returns(s)
-
-      V(s) ← average(Returns(s))
-
+    * G ← return following the first occurrence of s
+    * Append G to Returns(s)
+    * V(s) ← average(Returns(s))
 4. For each state s in the episode:
-
-      π(s) ← argmax_a ∑_s' P(s'|s,a)V(s')
-
+    * π(s) ← argmax_a ∑_s' P(s'|s,a)V(s')
 5. Repeat steps 2-4 until the policy converges.
-6. Use the function decay_schedule to decay the value of epsilon and alpha.
-7. Use the function gen_traj to generate a trajectory.
-8. Use the function tqdm to display the progress bar.
-9. After the policy converges, use the function np.argmax to find the optimal policy. The function takes the following arguments:
+6. Use the function `decay_schedule` to decay the value of epsilon and alpha.
+7. Use the function `gen_traj` to generate a trajectory.
+8. Use the function `tqdm` to display the progress bar.
+9. After the policy converges, use the function `np.argmax` to find the optimal policy. The function takes the following arguments:
+    * `Q`: The Q-table.
+    * `axis`: The axis along which to find the maximum value.
 
-    Q: The Q-table.
+## ALGORITHM
+### STEP 1
+Initialize the agent's knowledge of the environment, which includes the Q-values, state-value function, and policy.
 
-    axis: The axis along which to find the maximum value.
+### STEP 2
+The agent explores the environment, taking actions and observing the rewards and next states. This process is repeated until an episode ends.
 
-## MONTE CARLO CONTROL FUNCTION
+### STEP 3
+For each step in the episode, the agent updates its Q-value estimate for the state-action pair it took. The update is based on the reward received and the value of the next state.
+
+### STEP 4
+The agent updates its policy to select the action with the highest Q-value for each state.
+
+### STEP 5
+The agent repeats steps 2-4 for a specified number of episodes or until it converges to a good policy.
+
+### STEP 6
+The agent returns the optimal Q-values, state-value function, and policy.
+
+## MONTE CARLO CONTROL ALGORITHM
 ```
+Developed By: GANESH R
+Register no: 212222240029
+```
+```py
 import numpy as np
 from tqdm import tqdm
 
@@ -82,7 +94,7 @@ def mc_control(env, gamma=1.0, init_alpha=0.5, min_alpha=0.01, alpha_decay_ratio
     disc = np.logspace(0, max_steps, num=max_steps, base=gamma, endpoint=False)
 
     def decay_schedule(init_value, min_value, decay_ratio, n):
-        return np.maximum(min_value, init_value * (decay_ratio ** np.arange(n)))
+        return np.maximum(min_value, init_value * (decay_ratio ** np.arange(n))
 
     # Create schedules for alpha and epsilon decay
     alphas = decay_schedule(init_alpha, min_alpha, alpha_decay_ratio, n_episodes)
@@ -98,7 +110,7 @@ def mc_control(env, gamma=1.0, init_alpha=0.5, min_alpha=0.01, alpha_decay_ratio
     for e in tqdm(range(n_episodes), leave=False):
         # Generate a trajectory
         traj = gen_traj(select_action, Q, epsilons[e], env, max_steps)
-        visited = np.zeros((nS, nA), dtype=bool)
+        visited = np.zeros((nS, nA), dtype=np.bool)
 
         for t, (state, action, reward, _, _) in enumerate(traj):
             if visited[state][action] and first_visit:
@@ -117,53 +129,62 @@ def mc_control(env, gamma=1.0, init_alpha=0.5, min_alpha=0.01, alpha_decay_ratio
 
     return Q, V, pi
 ```
-## Generate Trajectory
-```
-from itertools import count
+## PROGRAM TO EVALUATE THE POLICY
+```py
+# number of episodes = 450000
+import random
 import numpy as np
 
-def gen_traj(select_action,Q,epsilon,env,max_steps=200):
-    done,traj = False,[]
+def probability_success(env, pi, goal_state, n_episodes=100, max_steps=200, seed=123):
+    random.seed(seed)
+    np.random.seed(seed)
+    env.seed(seed)
+    results = []
 
-    while not done:
-        state = env.reset()
+    for _ in range(n_episodes):
+        state, done, steps = env.reset(), False, 0
+        while not done and steps < max_steps:
+            action = pi[state]
+            state, _, done, _ = env.step(action)
+            steps += 1
+        results.append(state == goal_state)
 
-        for t in count():
-            action = select_action(state,Q,epsilon)
-            next,reward,done,_ = env.step(action)
-            exp = (state,action,reward,next,done)
-            traj.append(exp)
+    success_rate = np.sum(results) / len(results)
+    return success_rate
 
-            if done:
-                break
-            if t>=max_steps-1:
-                traj = []
-                break
+def mean_return(env, pi, n_episodes=100, max_steps=200, seed=123):
+    random.seed(seed)
+    np.random.seed(seed)
+    env.seed(seed)
+    results = []
 
-            state = next
-        return np.array(traj,object)
-```
-## Display
-```
+    for _ in range(n_episodes):
+        state, done, steps = env.reset(), False, 0
+        returns = 0.0
+        while not done and steps < max_steps:
+            action = pi[state]
+            state, reward, done, _ = env.step(action)
+            returns += reward
+            steps += 1
+        results.append(returns)
+
+    average_return = np.mean(results)
+    return average_return
+
 def results(env, optimal_pi, goal_state, seed=123):
     success_rate = probability_success(env, optimal_pi, goal_state=goal_state, seed=seed)
     avg_return = mean_return(env, optimal_pi, seed=seed)
     
-    print(f'Reaches goal {success_rate:.2%}.Obtains an average undiscounted return of: {avg_return:.4f}.')
+    print(f'Reaches goal {success_rate:.2%}. 
+  			Obtains an average undiscounted return of: {avg_return:.4f}.')
 
 goal_state = 15
-results(env, optimal_pi, goal_state=goal_state)
-print_state_value_function(optimal_Q, P, n_cols=4, prec=2, title='Action-value function:')
-print_state_value_function(optimal_V, P, n_cols=4, prec=2, title='State-value function:')
-print_policy(optimal_pi, P)
+results(env, optimal_pi, goal_state=goal_state) 
+
 ```
 ## OUTPUT:
-
-![Screenshot 2024-04-17 133951](https://github.com/lisianathiruselvan/monte-carlo-control/assets/119389971/fbbfd8d7-096c-479f-a82a-940bb3fcb8c8)
-
-![Screenshot 2024-04-17 134501](https://github.com/lisianathiruselvan/monte-carlo-control/assets/119389971/7136396c-4db9-425e-a92d-1df9cbde4b2f)
-
+![280755067-de865f54-3ef4-414b-91fa-b5872202152d](https://github.com/Pravinrajj/monte-carlo-control/assets/117917674/d24dcecd-72d6-49c9-afa2-f223c0ccfb48)
+![280755093-383f5977-817c-446f-ae43-cdabc5a8b8ec](https://github.com/Pravinrajj/monte-carlo-control/assets/117917674/339e770d-eaf3-4585-8f5a-1ae1ffc18156)
 
 ## RESULT:
-
-We have successfully developed a Python program to find the optimal policy for the given RL environment using the Monte Carlo algorithm.
+Thus, Python program is developed to find the optimal policy for the given RL environment using the Monte Carlo algorithm.
